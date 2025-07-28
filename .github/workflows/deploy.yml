@@ -1,0 +1,62 @@
+name: Secure Blue-Green Deployment
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/bluegreen-python
+  VERSION: ${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Docker Build & Push
+        run: |
+          docker build -t $IMAGE:$VERSION .
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+          docker push $IMAGE:$VERSION
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > $HOME/.kube/config
+
+      - name: Update Rollout Manifest
+        run: |
+          sed -i "s|image: .*|image: $IMAGE:$VERSION|" k8s/rollout.yaml
+
+      - name: Apply Rollout
+        run: |
+          kubectl apply -f k8s/rollout.yaml
+          kubectl argo rollouts get rollout python-rollout --watch
+
+      - name: Run Trivy Scan
+        run: |
+          ./scripts/trivy-scan.sh $IMAGE:$VERSION || echo "TRIVY_FAIL=true" >> $GITHUB_ENV
+
+      - name: Run Falco Check
+        run: |
+          ./scripts/falco-check.sh || echo "FALCO_FAIL=true" >> $GITHUB_ENV
+
+      - name: Decide and Promote or Abort
+        run: |
+          if [[ "$TRIVY_FAIL" == "true" || "$FALCO_FAIL" == "true" ]]; then
+            echo "❌ Security checks failed. Aborting..."
+            kubectl argo rollouts abort python-rollout
+            curl -H 'Content-Type: application/json' -d '{
+              "text": "🚨 Deployment FAILED security checks. Rollout aborted. Blue version kept alive."
+            }' ${{ secrets.MS_TEAMS_WEBHOOK }}
+            exit 1
+          else
+            echo "✅ All checks passed. Promoting rollout..."
+            kubectl argo rollouts promote python-rollout
+            curl -H 'Content-Type: application/json' -d '{
+              "text": "✅ Deployment SUCCEEDED. Green version promoted to production."
+            }' ${{ secrets.MS_TEAMS_WEBHOOK }}
+          fi
+

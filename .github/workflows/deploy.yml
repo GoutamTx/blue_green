@@ -33,7 +33,20 @@ jobs:
       - name: Apply Rollout
         run: |
           kubectl apply -f k8s/rollout.yaml
-          kubectl argo rollouts get rollout python-rollout --watch
+          
+          echo "Waiting for rollout to become healthy..."
+          for i in {1..30}; do
+            STATUS=$(kubectl argo rollouts get rollout python-rollout -o jsonpath='{.status.phase}')
+            echo "Current Status: $STATUS"
+            if [[ "$STATUS" == "Healthy" ]]; then
+              echo "✅ Rollout is healthy."
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "❌ Rollout did not become healthy in time."
+          exit 1
 
       - name: Run Trivy Scan
         run: |

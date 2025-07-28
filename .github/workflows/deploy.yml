@@ -36,7 +36,7 @@ jobs:
           
           echo "Waiting for rollout to become healthy..."
           for i in {1..30}; do
-            STATUS=$(kubectl argo rollouts get rollout python-rollout -o jsonpath='{.status.phase}')
+            STATUS=$(kubectl get rollout python-rollout -o jsonpath='{.status.phase}')
             echo "Current Status: $STATUS"
             if [[ "$STATUS" == "Healthy" ]]; then
               echo "✅ Rollout is healthy."

@@ -9,8 +9,6 @@ spec:
       activeService: python-active
       previewService: python-preview
       autoPromotionEnabled: false
-      pause:
-        duration: 0s
   selector:
     matchLabels:
       app: python-app

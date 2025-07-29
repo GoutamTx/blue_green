@@ -70,6 +70,8 @@ jobs:
 
       - name: Decide and Promote or Abort
         run: |
+          echo "$TRIVY_FAIL"
+          echo "$FALCO_FAIL"
           if [[ "$TRIVY_FAIL" == "true" || "$FALCO_FAIL" == "true" ]]; then
             echo "❌ Security checks failed. Aborting..."
             kubectl argo rollouts abort python-rollout

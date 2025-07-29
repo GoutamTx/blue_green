@@ -36,10 +36,13 @@ jobs:
           
           echo "Waiting for rollout to become healthy..."
           for i in {1..30}; do
-            STATUS=$(kubectl argo rollouts get rollout python-rollout -o json | jq -r '.status.conditions[] | select(.type=="Progressing") | .reason')
+            STATUS=$(kubectl get rollout python-rollout -o json | jq -r '.status.conditions[] | select(.type=="Progressing") | .reason')
             echo "Current Status: $STATUS"
-            if [[ "$STATUS" == "Healthy" ]]; then
+            if [[ "$STATUS" == "NewReplicaSetAvailable" ]]; then
               echo "✅ Rollout is healthy."
+              exit 0
+            elif [[ "$STATUS" == "PausedRollout" ]]; then
+              echo "⏸️ Rollout is paused and waiting for manual promotion."
               exit 0
             fi
             sleep 10

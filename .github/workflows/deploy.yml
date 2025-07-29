@@ -19,7 +19,7 @@ jobs:
 
       - name: Docker Build & Push
         run: |
-          docker build -t $IMAGE:$VERSION .
+          docker build --build-arg VERSION=green -t $IMAGE:$VERSION .
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
           docker push $IMAGE:$VERSION
 

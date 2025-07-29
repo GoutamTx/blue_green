@@ -3,6 +3,7 @@ WORKDIR /app
 RUN apk update && apk upgrade
 COPY app/ .
 RUN pip install --no-cache-dir flask
-ENV VERSION=blue
+ARG VERSION=blue	
+ENV VERSION=$VERSION
 CMD ["python", "app.py"]
 

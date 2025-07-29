@@ -40,16 +40,20 @@ jobs:
             echo "Current Status: $STATUS"
             if [[ "$STATUS" == "NewReplicaSetAvailable" ]]; then
               echo "✅ Rollout is healthy."
-              exit 0
+              ROLLOUT_OK=true
+              break
             elif [[ "$STATUS" == "PausedRollout" ]]; then
               echo "⏸️ Rollout is paused and waiting for manual promotion."
-              exit 0
+              ROLLOUT_OK=true
+              break
             fi
             sleep 10
           done
 
-          echo "❌ Rollout did not become healthy in time."
-          exit 1
+          if [[ "$ROLLOUT_OK" == "false" ]]; then
+            echo "❌ Rollout did not become healthy in time."
+            exit 1
+          fi
 
       - name: Run Trivy Scan
         run: |

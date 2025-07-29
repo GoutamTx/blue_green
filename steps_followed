@@ -1,0 +1,32 @@
+step 1
+created a github repo and a ec2
+
+step 2
+
+wrote a basic pyhton code and a dockerfile for it
+
+
+step 3
+
+understanded the blue green deployment policy and installed argo rollout to implement it.
+wrote the rollout.yaml for it.
+
+step 4
+
+installed other tools like docker,kubectl,falco,trivy
+
+step 5
+
+created some scripts which performs the trivy test and falco test
+
+step 6 
+
+wrote a github action workflow which can automate the whole task
+workflow
+
+build a image
+push image to dockerhub        (used github secret to store the credentials)
+applied the rollout policy but kept it in pause state until the trivy scan and falco checks are performed
+set a 10 m watch for falco checks
+used conditional expression for deployment of app (either abort or promoted)
+

@@ -55,6 +55,9 @@ jobs:
             exit 1
           fi
 
+      - name: Make scripts executable
+        run: chmod +x ./scripts/*.sh
+
       - name: Run Trivy Scan
         run: |
           ./scripts/trivy-scan.sh $IMAGE:$VERSION || echo "TRIVY_FAIL=true" >> $GITHUB_ENV
